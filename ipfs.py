@@ -33,16 +33,16 @@ def pin_to_ipfs(data):
     json_data = json.dumps(data)
     
     # Using Infura endpoint for pinning
-    url = "https://ipfs.infura.io:5001/api/v0/add"
+    url = "https://ipfs.io/api/v0/add"
     files = {'file': ('data.json', json_data)}
     response = requests.post(url, files=files)
+
+    response = requests.post(url, files=files)
+    cid = response.json()['Hash']
+
+    return cid
     
-    # Check if the response is successful
-    if response.status_code == 200:
-        cid = response.json().get('Hash')
-        return cid
-    else:
-        raise Exception(f"Failed to pin data to IPFS. Status code: {response.status_code}, Error: {response.text}")
+    
 
 def get_from_ipfs(cid, content_type="json"):
     assert isinstance(cid, str), "Error: get_from_ipfs expects a CID as a string"
