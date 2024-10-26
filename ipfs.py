@@ -18,7 +18,7 @@ def get_from_ipfs(cid,content_type="json"):
 	assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
 	#YOUR CODE HERE	
   	url = f"https://ipfs.io/ipfs/{content ID}"
- 	 response = requests.get(url)
+ 	response = requests.get(url)
   	data = response.json()
 
 	assert isinstance(data,dict), f"get_from_ipfs should return a dict"
