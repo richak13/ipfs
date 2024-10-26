@@ -1,7 +1,7 @@
 import requests
 import json
 
-def pin_to_ipfs_infura(data):
+def pin_to_ipfs(data):
     assert isinstance(data, dict), "Error: pin_to_ipfs expects a dictionary"
     json_data = json.dumps(data)
     ipfs_url = "https://ipfs.infura.io:5001/api/v0/add"
@@ -15,7 +15,7 @@ def pin_to_ipfs_infura(data):
     else:
         raise Exception("Failed to pin data to IPFS via Infura")
 
-def get_from_ipfs_infura(cid, content_type="json"):
+def get_from_ipfs(cid, content_type="json"):
     assert isinstance(cid, str), "Error: get_from_ipfs expects CID as a string"
     ipfs_url = "https://ipfs.infura.io:5001/api/v0/cat"
     response = requests.post(ipfs_url, params={'arg': cid})
