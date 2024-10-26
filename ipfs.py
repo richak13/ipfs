@@ -6,7 +6,7 @@ def pin_to_ipfs(data):
 	#YOUR CODE HERE
 	json_data = json.dumps(data)
 	
-	url = "https://ipfs.infura.io:5001/api/v0/add"
+	url = "https://ipfs.io/api/v0/add"
 	auth = ('f474620ee28c4a6185ac4f3facbd6cf6', '4Cl8T1Of1kxnu0JC1/sLo+t7qqZDfB+LYtQnUPj8WTc/hCp6v7uaAQ')
 	files = {
 			'file': ('data.json', json_data)
