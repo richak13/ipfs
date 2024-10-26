@@ -5,7 +5,7 @@ def pin_to_ipfs(data):
 	assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
 	#YOUR CODE HERE
 	json_data = json.dumps(data)
-	url = "https://ipfs.io/api/v0/add"
+	url = "https://ipfs.infura.io:5001/api/v0/add"
 	files = {
 			'file': ('data.json', json_data)
 	}
