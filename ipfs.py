@@ -2,64 +2,47 @@ import requests
 import json
 
 def pin_to_ipfs(data):
-	assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
-	#YOUR CODE HERE
-	json_data = json.dumps(data)
-	
-	url = "https://ipfs.io/api/v0/add"
-	auth = ('f474620ee28c4a6185ac4f3facbd6cf6', '4Cl8T1Of1kxnu0JC1/sLo+t7qqZDfB+LYtQnUPj8WTc/hCp6v7uaAQ')
-	files = {
-			'file': ('data.json', json_data)
-	}
-	response = requests.post(url, files={'file': ('data.json', json_data)}, auth=auth)
-	cid = response.json()['Hash']
+    assert isinstance(data, dict), "Error: pin_to_ipfs expects a dictionary"
+    
+    # Convert the dictionary to JSON format
+    json_data = json.dumps(data)
+    
+    # Pinata API URL for pinning JSON data
+    url = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
+    
+    # Headers for Pinata API authentication (replace with your actual API keys)
+    headers = {
+        'Content-Type': 'application/json',
+        'pinata_api_key': '15e6e2c3bd7b6610a7cf',
+        'pinata_secret_api_key': '1cde024c70d3deff5b8bec33aba4d14f542be3200f53ffc4853df6fdaa475a8a'
+    }
+    
+    # Send the JSON data to Pinata
+    response = requests.post(url, data=json_data, headers=headers)
+    
+    # Check if the response is successful
+    if response.status_code == 200:
+        # Extract and return the CID (IpfsHash) from the response
+        cid = response.json().get('IpfsHash')
+        return cid
+    else:
+        # Raise an error if the request fails
+        raise Exception(f"Failed to pin data to IPFS. Status code: {response.status_code}, Error: {response.text}")
 
-	return cid
-
-def get_from_ipfs(cid,content_type="json"):
-	
-    assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
-	#YOUR CODE HERE	
-    url = f"https://ipfs.io/ipfs/{cid}"
+def get_from_ipfs(cid, content_type="json"):
+    assert isinstance(cid, str), "Error: get_from_ipfs expects a CID as a string"
+    
+    # Pinata gateway URL for retrieving data
+    url = f"https://gateway.pinata.cloud/ipfs/{cid}"
     response = requests.get(url)
-    data = response.json()
-
-    assert isinstance(data,dict), f"get_from_ipfs should return a dict"
-    return data
-
-# import requests
-# import json
-
-# def pin_to_ipfs(data):
-#     assert isinstance(data, dict), "Error: pin_to_ipfs expects a dictionary"
-#     json_data = json.dumps(data)
     
-#     # Using Infura endpoint for pinning
-#     url = "https://ipfs.io/api/v0/add"
-#     files = {'file': ('data.json', json_data)}
-#     response = requests.post(url, files=files)
-
-#     response = requests.post(url, files=files)
-#     cid = response.json()['Hash']
-
-#     return cid
-    
-    
-
-# def get_from_ipfs(cid, content_type="json"):
-#     assert isinstance(cid, str), "Error: get_from_ipfs expects a CID as a string"
-    
-#     # Accessing the data via Infura gateway
-#     url = f"https://ipfs.infura.io:5001/api/v0/cat?arg={cid}"
-#     response = requests.post(url)
-    
-#     # Check if response is successful and content type is JSON
-#     if response.status_code == 200:
-#         try:
-#             data = response.json()
-#             assert isinstance(data, dict), "Error: get_from_ipfs should return a dictionary"
-#             return data
-#         except ValueError:
-#             raise Exception("Error: The retrieved data is not in JSON format.")
-#     else:
-#         raise Exception(f"Failed to retrieve data from IPFS. Status code: {response.status_code}, Error: {response.text}")
+    # Check if response is successful and parse JSON data
+    if response.status_code == 200:
+        try:
+            data = response.json()
+            assert isinstance(data, dict), "Error: get_from_ipfs should return a dictionary"
+            return data
+        except ValueError:
+            raise Exception("Error: The retrieved data is not in JSON format.")
+    else:
+        raise Exception(f"Failed to retrieve data from IPFS. Status code: {response.status_code}, Error: {response.text}")
