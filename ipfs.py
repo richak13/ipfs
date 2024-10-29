@@ -1,39 +1,56 @@
+from web3 import Web3
+from web3.contract import Contract
+from web3.providers.rpc import HTTPProvider
 import requests
 import json
 
-def pin_to_ipfs(data):
-    assert isinstance(data, dict), "Error: pin_to_ipfs expects a dictionary"
-    json_data = json.dumps(data)
-    url = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
-    headers = {
-        'Content-Type': 'application/json',
-        'pinata_api_key': '15e6e2c3bd7b6610a7cf',
-        'pinata_secret_api_key': '1cde024c70d3deff5b8bec33aba4d14f542be3200f53ffc4853df6fdaa475a8a'
-    }
-    
-    response = requests.post(url, data=json_data, headers=headers)
-    
-    if response.status_code == 200:
-        # Extract and return the CID (IpfsHash) from the response
-        cid = response.json().get('IpfsHash')
-        return cid
-    else:
-        # Raise an error if the request fails
-        raise Exception(f"Failed to pin data to IPFS. Status code: {response.status_code}, Error: {response.text}")
+# Define the Bored Ape contract address and Infura API URL
+bayc_address = "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
+api_url = "https://mainnet.infura.io/v3/f474620ee28c4a6185ac4f3facbd6cf6"
 
-def get_from_ipfs(cid, content_type="json"):
-    assert isinstance(cid, str), "Error: get_from_ipfs expects a CID as a string"
-    
-    # Pinata gateway URL for retrieving data
-    url = f"https://gateway.pinata.cloud/ipfs/{cid}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            assert isinstance(data, dict), "Error: get_from_ipfs should return a dictionary"
-            return data
-        except ValueError:
-            raise Exception("Error: The retrieved data is not in JSON format.")
-    else:
-        raise Exception(f"Failed to retrieve data from IPFS. Status code: {response.status_code}, Error: {response.text}")
+# Load ABI from file
+with open('/home/codio/workspace/abi.json', 'r') as f:
+    abi = json.load(f) 
+
+# Connect to the Ethereum provider
+provider = HTTPProvider(api_url)
+web3 = Web3(provider)
+assert web3.is_connected(), "Failed to connect to Ethereum provider."
+
+# Initialize contract
+contract_address = Web3.toChecksumAddress(bayc_address)
+contract = web3.eth.contract(address=contract_address, abi=abi)
+
+# Function to get Bored Ape NFT information
+def get_ape_info(apeID):
+    assert isinstance(apeID, int), f"{apeID} is not an integer."
+    assert apeID >= 1, f"ApeID {apeID} must be at least 1."
+
+    data = {'owner': "", 'image': "", 'eyes': ""}
+
+    try:
+        # Get owner of the NFT
+        owner = contract.functions.ownerOf(apeID).call()
+        data['owner'] = owner
+
+        # Retrieve the token URI and convert IPFS URI
+        token_uri = contract.functions.tokenURI(apeID).call()
+        ipfs_url = token_uri.replace("ipfs://", "https://ipfs.io/ipfs/")
+
+        # Fetch metadata from IPFS
+        metadata_response = requests.get(ipfs_url)
+        if metadata_response.status_code == 200:
+            metadata = metadata_response.json()
+            data['image'] = metadata.get('image')
+            data['eyes'] = next((attr['value'] for attr in metadata.get('attributes', []) if attr['trait_type'] == 'Eyes'), None)
+        else:
+            raise Exception(f"Failed to retrieve metadata for apeID {apeID}. Status code: {metadata_response.status_code}")
+        
+    except Exception as e:
+        print(f"Error retrieving info for ApeID {apeID}: {e}")
+
+    # Verify data structure
+    assert isinstance(data, dict), f"get_ape_info({apeID}) should return a dictionary."
+    assert all(key in data for key in ['owner', 'image', 'eyes']), "Return value should include keys 'owner', 'image', and 'eyes'."
+
+    return data
